@@ -22,7 +22,7 @@ function make_unique {
 #
 ######################################
 # How many latest packages to keep
-readonly keep_count=2
+readonly keep_count=3
 
 # Coloring
 readonly style_bold="$(tput bold)"
@@ -94,6 +94,11 @@ fi
 
 # Compile versions to be purged
 readonly versions_to_be_purged=${uniq[@]::(${#uniq[@]} - ${keep_count})}
+
+if [[ $((${#uniq[@]} - ${keep_count})) == 0 ]]; then
+  echo "No old packages found. Nothing to purge. Exiting..."
+  exit 0
+fi
 
 echo "Staring purging process..."
 echo ""
