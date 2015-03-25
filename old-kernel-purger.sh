@@ -102,7 +102,7 @@ do
   echo "The following package will be removed: ${style_bold}${style_c_red}${version_major}-${ver}-${version_type}${style_rst}"
   echo ""
   if [[ ${ver} != ${version_minor} ]]; then
-    apt-get purge linux-image-${version_major}-${ver}-generic
+    apt-get purge linux-image-${version_major}-${ver}-${version_type}
   else
   	echo "${style_bold}${style_c_red}Can't purge loaded version. Skipping purging of currently loaded package...${style_rst}"
   fi
