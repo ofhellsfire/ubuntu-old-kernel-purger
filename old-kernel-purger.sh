@@ -21,7 +21,7 @@ function make_unique {
 # configuration variables
 #
 ######################################
-# How many latest packages keep
+# How many latest packages to keep
 readonly keep_count=2
 
 # Coloring
