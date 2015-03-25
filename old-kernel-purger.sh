@@ -25,10 +25,10 @@ function make_unique {
 readonly keep_count=2
 
 # Coloring
-B="$(tput bold)"
-X="$(tput sgr0)"
-c_red="$(tput setaf 1)"
-c_green="$(tput setaf 2)"
+readonly style_bold="$(tput bold)"
+readonly style_rst="$(tput sgr0)"
+readonly style_c_red="$(tput setaf 1)"
+readonly style_c_green="$(tput setaf 2)"
 
 ############# E N D ##################
 
@@ -99,14 +99,15 @@ echo "Staring purging process..."
 echo ""
 for ver in ${versions_to_be_purged}
 do
-  echo "The following package will be removed: ${B}${c_red}${version_major}-${ver}-${version_type}${X}"
+  echo "The following package will be removed: ${style_bold}${style_c_red}${version_major}-${ver}-${version_type}${style_rst}"
   echo ""
   if [[ ${ver} != ${version_minor} ]]; then
     apt-get purge linux-image-${version_major}-${ver}-generic
   else
-  	echo "${B}${c_red}Can't purge loaded version. Skipping purging of currently loaded package...${X}"
+  	echo "${style_bold}${style_c_red}Can't purge loaded version. Skipping purging of currently loaded package...${style_rst}"
   fi
   echo ""
 done
 
-echo "${B}${c_green}The purging process has been finished successfully${X}"
+echo "${style_bold}${style_c_green}The purging process has been finished successfully${style_rst}"
+exit 0
