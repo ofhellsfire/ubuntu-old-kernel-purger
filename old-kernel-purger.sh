@@ -22,7 +22,7 @@ function make_unique {
 #
 ######################################
 # How many latest packages to keep
-readonly keep_count=3
+readonly keep_count=2
 
 # Coloring
 readonly style_bold="$(tput bold)"
