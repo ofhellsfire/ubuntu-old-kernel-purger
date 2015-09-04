@@ -17,13 +17,16 @@ make_unique() {
 
 usage() {
   cat <<END
+Usage:
+
   SYNOPSIS
-    ${SCRIPT_NAME} [-ahly] [-p version]
+    ${0#./} [-ahly] [-p version]
 
   DESCRIPTION
     Removes old kernel versions in Ubuntu 14.04.
     Old kernal versions are those that are older 
     than current version minus 2 previous versions.
+
     Note: By default interactive mode is on
 
   OPTIONS
@@ -33,9 +36,8 @@ usage() {
     -y                  Turn off interactive mode
     -p [version]        Purge specific version
 
-  EXAMPLES
-    ${SCRIPT_NAME} -y -p 3.19.0-15
-
+  EXAMPLE
+    ${0#./} -y -p 3.19.0-15
 END
 }
 
