@@ -11,8 +11,32 @@
 # Returns:
 #   None
 #######################################
-function make_unique {
+make_unique() {
   UNIQ=$(echo "${@}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+}
+
+usage() {
+  cat <<END
+  SYNOPSIS
+    ${SCRIPT_NAME} [-ahly] [-p version]
+
+  DESCRIPTION
+    Removes old kernel versions in Ubuntu 14.04.
+    Old kernal versions are those that are older 
+    than current version minus 2 previous versions.
+    Note: By default interactive mode is on
+
+  OPTIONS
+    -a                  Purge all old kernel versions
+    -h                  Pring this message
+    -l                  Show all uploaded kernel versions
+    -y                  Turn off interactive mode
+    -p [version]        Purge specific version
+
+  EXAMPLES
+    ${SCRIPT_NAME} -y -p 3.19.0-15
+
+END
 }
 
 ######################################
