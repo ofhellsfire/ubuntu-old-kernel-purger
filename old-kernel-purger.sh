@@ -22,7 +22,7 @@ function make_unique {
 #
 ######################################
 # How many latest packages to keep
-readonly keep_count=2
+readonly keep_count=3
 
 # Coloring
 readonly style_bold="$(tput bold)"
@@ -93,7 +93,10 @@ if [[ ${installed_major} != ${version_major} ]]; then
 fi
 
 # Compile versions to be purged
-readonly versions_to_be_purged=${uniq[@]::(${#uniq[@]} - ${keep_count})}
+# ( $( printf "%s\n" "${foo[@]}" | sort -n ) )
+readonly sorted=( $( printf "%s\n" "${uniq[@]}" | sort -n ) )
+readonly versions_to_be_purged=${sorted[@]::(${#sorted[@]} - ${keep_count})}
+echo "Versions to be purged: ${versions_to_be_purged}"
 
 if [[ $((${#uniq[@]} - ${keep_count})) == 0 ]]; then
   echo "No old packages found. Nothing to purge. Exiting..."
