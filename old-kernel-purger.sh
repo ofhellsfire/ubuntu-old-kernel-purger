@@ -1,121 +1,143 @@
-#!/bin/bash
-#
-# Purge old kernel versions from Linux Ubuntu 14.04
+#!/bin/bash -e
 
-#######################################
-# Remove repeated values from array
-# Globals:
-#   UNIQ
-# Arguments:
-#   array
-# Returns:
-#   None
-#######################################
-function make_unique {
-  UNIQ=$(echo "${@}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+BASH_VER=( ${BASH_VERSION//./ } )
+MIN_SUPPORT_VERSION=4
+
+print_help() {
+echo "Script Name: ${0:2}
+
+Deletes old kernel packages for Ubuntu 14.04 (requires root privileges)
+
+Usage:
+-h, --help		Print usage
+-d, --dry-run		Run without making real actions.
+                	Useful for examining what packages
+                	will be removed. Default: false
+-y, --yes		Run in non-interactive mode.
+			Default: false
+-k <num>, --keep <num>	Specify how many latest versions to keep.
+			Default: 2"
 }
 
-######################################
-#
-# This section stands for 
-# configuration variables
-#
-######################################
-# How many latest packages to keep
-readonly keep_count=3
-
-# Coloring
-readonly style_bold="$(tput bold)"
-readonly style_rst="$(tput sgr0)"
-readonly style_c_red="$(tput setaf 1)"
-readonly style_c_green="$(tput setaf 2)"
-
-############# E N D ##################
-
-
-# Get current kernel version and split it into pieces
-readonly current_kernel="$(uname -r)"
-
-if [[ "$?" -ne 0 ]]; then
-  echo "Unable to get kernel version." >&2
-  exit 1
-fi
-
-## Splitting into pieces 
-readonly current_kernel_parts=( ${current_kernel//-/ } )
-readonly version_major=${current_kernel_parts[0]}
-readonly version_minor=${current_kernel_parts[1]}
-readonly version_type=${current_kernel_parts[2]}
-
-# Feedback output
-echo ""
-echo "Current kernel version information: ${version_major}-${version_minor}-${version_type}"
-echo ""
-
-
-
-# Get installed minor kernel versions
-readonly kernel_packages="$(ls /boot/ | grep ${version_type})"
-
-if [[ "$?" -ne 0 ]] && [[ ${#kernel_packages[*]} -eq 0 ]]; then
-  echo "Unable to get installed kernel packages." >&2
-  exit 1
-fi
-
-declare -a installed_minors=()
-
-for file in ${kernel_packages[@]}
-do
-  file_parts=( ${file//-/ } )
-  installed_minors+=(${file_parts[2]})
-  installed_major=(${file_parts[1]})
-done
-
-make_unique ${installed_minors[@]}
-
-IFS=' ' read -ra uniq <<< ${UNIQ}
-
-# Feedback output
-echo ""
-echo "Following packages are found:"
-echo ""
-for i in ${kernel_packages[@]}; do
-  echo ${i}
-done
-echo ""
-
-
-
-# Check if installed major matches
-if [[ ${installed_major} != ${version_major} ]]; then
-  echo "Extracted installed major version: ${installed_major} doesn't match against current version: ${version_major}." >&2
-  exit 1
-fi
-
-# Compile versions to be purged
-# ( $( printf "%s\n" "${foo[@]}" | sort -n ) )
-readonly sorted=( $( printf "%s\n" "${uniq[@]}" | sort -n ) )
-readonly versions_to_be_purged=${sorted[@]::(${#sorted[@]} - ${keep_count})}
-echo "Versions to be purged: ${versions_to_be_purged}"
-
-if [[ $((${#uniq[@]} - ${keep_count})) == 0 ]]; then
-  echo "No old packages found. Nothing to purge. Exiting..."
-  exit 0
-fi
-
-echo "Staring purging process..."
-echo ""
-for ver in ${versions_to_be_purged}
-do
-  echo "The following package will be removed: ${style_bold}${style_c_red}${version_major}-${ver}-${version_type}${style_rst}"
-  echo ""
-  if [[ ${ver} != ${version_minor} ]]; then
-    apt-get purge linux-image-${version_major}-${ver}-${version_type}
-  else
-  	echo "${style_bold}${style_c_red}Can't purge loaded version. Skipping purging of currently loaded package...${style_rst}"
+check_bash_version() {
+  if [[ "${BASH_VER[0]}" -lt "${MIN_SUPPORT_VERSION}" ]]; then
+    echo "Unsupported Bash version has been detected. Detected Bash version is ${BASH_VER[0]}. Minimal required version is ${MIN_SUPPORT_VERSION}. Exiting..."
+    exit 1
   fi
-  echo ""
-done
+}
 
-echo "${style_bold}${style_c_green}The purging process has been finished successfully${style_rst}"
-exit 0
+check_privileges() {
+  if [[ "$EUID" -ne 0 ]]; then
+    echo "Script must be run with root privileges. Exiting..."
+    exit 2
+  fi
+}
+
+create_exclude() {
+  readarray kernelkeep < .kernelkeep
+  for line in ${kernelkeep[@]}; do
+    exclude="${exclude}|${line}"
+    echo "The following package will be kept: ${line}-generic"
+  done
+}
+
+find_keep() {
+  for ((x=0;x<${keep_count};x++)); do
+    unset packages
+    declare -A packages
+    names=($(ls /boot | grep vmlinuz | grep -Ev "${exclude}" | grep -Ev "${keep}"))
+
+    for ((i=0;i<${#names[@]};i++)); do
+      name=${names[$i]}
+
+      # split string
+      parted=( ${name//-/ } )
+      version=( ${parted[1]//./ } )
+      major=${version[0]}
+      minor=${version[1]}
+      sub_minor=${version[2]}
+      build=${parted[2]}
+      packages[$i,0]=$name
+      packages[$i,1]=$major
+      packages[$i,2]=$minor
+      packages[$i,3]=$sub_minor
+      packages[$i,4]=$build
+    done
+
+    maxi=0
+    maxk=$(( ${packages[0,1]} * 1000000000 + ${packages[0,2]} * 1000000 + ${packages[0,3]} * 1000 + ${packages[0,4]} ))
+    for ((j=1;j<$(( ${#packages[@]} / 5 ));j++)); do
+      k=$(( ${packages[$j,1]} * 1000000000 + ${packages[$j,2]} * 1000000 + ${packages[$j,3]} * 1000 + ${packages[$j,4]} ))
+      if [[ ${k} -ge ${maxk} ]]; then
+        maxi=$j
+        maxk=${k}
+      fi
+    done
+
+    echo "The following package will be kept: ${packages[$maxi,1]}.${packages[$maxi,2]}.${packages[$maxi,3]}-${packages[$maxi,4]}-generic"
+
+    keep="${keep}|${packages[$maxi,0]}"
+  done
+}
+
+delete_packages() {
+  names=($(ls /boot | grep vmlinuz | grep -Ev "${exclude}" | grep -Ev "${keep}"))
+  declare -A packages_to_delete
+
+  for ((i=0;i<${#names[@]};i++)); do
+    name=${names[$i]}
+
+    # split string
+    parted=( ${name//-/ } )
+    version=( ${parted[1]//./ } )
+    major=${version[0]}
+    minor=${version[1]}
+    sub_minor=${version[2]}
+    build=${parted[2]}
+    packages_to_delete[$i,0]=$name
+    packages_to_delete[$i,1]=$major
+    packages_to_delete[$i,2]=$minor
+    packages_to_delete[$i,3]=$sub_minor
+    packages_to_delete[$i,4]=$build
+  done
+
+  for ((m=0;m<$(( ${#packages_to_delete[@]} / 5 ));m++)); do
+    # echo "${packages_to_delete[$m,0]}";
+    yes=""
+    if [[ ${YES} ]]; then
+      yes="-y "
+    fi
+    pkg="linux-image-${packages_to_delete[$m,1]}.${packages_to_delete[$m,2]}.${packages_to_delete[$m,3]}-${packages_to_delete[$m,4]}-generic"
+    echo "Package to be deleted: ${pkg}"
+    if [[ -z ${DRYRUN} ]]; then
+      apt-get ${yes}purge ${pkg}
+    fi
+  done
+}
+
+main() {
+  check_bash_version
+
+  while true; do
+    case "$1" in
+      -h | --help ) print_help; exit 0 ;;
+      -d | --dry-run ) DRYRUN=true; shift ;;
+      -y | --yes ) YES=true; shift ;;
+      -k | --keep ) KEEP=${2}; shift 2 ;;
+      * ) break ;;
+    esac
+  done
+
+  check_privileges
+
+  keep=$(uuidgen)
+  keep_count=${KEEP:=2}
+  exclude=$(uname -r)
+
+  create_exclude
+  echo "The following package will be kept: $(uname -r)"
+  find_keep
+  delete_packages
+}
+
+main "$@"

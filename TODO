@@ -1,0 +1,12 @@
+- Add arguments:
+  - dry-run +V
+  - non-interactive +V
+  - keep count +V
+- Clean code
+- Add check for bash version +V
+- Add messages for logging & coloring
+- Add check if script is started without privileges +V
+- Add exclusion of the current kernel version +V
+- Add Readme.md
+- Add support for deletion of old-dkms files
+
