@@ -18,9 +18,11 @@ By default, in addition to the current kernel, it excludes 2 older versions as w
 ## Example
 
 __Show what packages will be kept and removed__
+
 ```sudo ./old-kernel-purger.sh --dry-run --keep 3```
 
 __Remove old packages without asking a prompt__
+
 ```sudo ./old-kernel-purger.sh --yes```
 
 ## Usage
