@@ -15,6 +15,14 @@ __old-kernel-purger__ supports so called _dry-run_ which reveals what packages a
 The script excludes the current running kernel version automatically.
 By default, in addition to the current kernel, it excludes 2 older versions as well. It's possible to control this parameter via command-line arguments.
 
+## Example
+
+__Show what packages will be kept and removed__
+```sudo ./old-kernel-purger.sh --dry-run --keep 3```
+
+__Remove old packages without asking a prompt__
+```sudo ./old-kernel-purger.sh --yes```
+
 ## Usage
 
 ```
