@@ -7,6 +7,7 @@
 - Add messages for logging & coloring
 - Add check if script is started without privileges +V
 - Add exclusion of the current kernel version +V
-- Add Readme.md
+- Add Readme.md +V
 - Add support for deletion of old-dkms files
+- Add some tests
 
