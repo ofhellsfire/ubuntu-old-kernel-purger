@@ -34,11 +34,14 @@ check_privileges() {
 }
 
 create_exclude() {
-  readarray kernelkeep < .kernelkeep
-  for line in ${kernelkeep[@]}; do
-    exclude="${exclude}|${line}"
-    echo "The following package will be kept: ${line}-generic"
-  done
+  local keepfile='.kernelkeep'
+  if [ -f ${keepfile} ]; then
+    readarray kernelkeep < ${keepfile}
+    for line in ${kernelkeep[@]}; do
+      exclude="${exclude}|${line}"
+      echo "The following package will be kept: ${line}-generic"
+    done
+  fi
 }
 
 find_keep() {
