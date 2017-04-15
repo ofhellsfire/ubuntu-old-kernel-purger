@@ -40,3 +40,8 @@ Usage:
 -k <num>, --keep <num>  Specify how many latest versions to keep.
                         Default: 2
 ```
+
+## Links
+
+[Russian README](./README-rus.md)
+
